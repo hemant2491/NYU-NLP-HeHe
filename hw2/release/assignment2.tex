@@ -1,0 +1,313 @@
+\documentclass{article}
+
+%Page format
+\usepackage{pdfpages}
+\usepackage{fancyhdr}
+\usepackage[margin=1in]{geometry}
+
+%Math packages and custom commands
+\usepackage{framed}
+\usepackage{tikz}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{mathtools,amsthm,bbm}
+\usepackage{enumitem,amssymb}
+\newtheoremstyle{case}{}{}{}{}{}{:}{ }{}
+\theoremstyle{case}
+\newtheorem{case}{Case}
+\DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{\text{Var}}
+\DeclareMathOperator{\Cov}{\text{Cov}}
+\newcommand{\bvec}[1]{\mathbf{#1}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\norm}[2][2]{\| #2\|_{#1}}
+\newcommand\eqdef{\stackrel{\rm def}{=}} % Equal by definition
+
+\definecolor{shadecolor}{gray}{0.9}
+
+\theoremstyle{definition}
+\newtheorem*{answer}{Answer}
+\newcommand{\note}[1]{\noindent{[\textbf{NOTE:} #1]}}
+\newcommand{\hint}[1]{\noindent{[\textbf{HINT:} #1]}}
+\newcommand{\recall}[1]{\noindent{[\textbf{RECALL:} #1]}}
+
+\newlist{todolist}{itemize}{2}
+\setlist[todolist]{label=$\square$}
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\done}{\rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+\hspace{-2.5pt}}
+\newcommand{\wontfix}{\rlap{$\square$}{\large\hspace{1pt}\xmark}}
+
+
+\title{\textbf{CSCI-GA 2590: Natural Language Processing} \\Predicting Sequences}
+\author{Name \\
+NYU ID}
+\date{}
+
+\lhead{NYU ID}
+\chead{Predicting Sequences}
+\rhead{\today}
+\lfoot{}
+\cfoot{CSCI-GA 2590: Natural Language Processing --- Fall 2021}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\pagestyle{fancy}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\maketitle
+
+\textbf{Collaborators:} \\
+\textit{By turning in this assignment, I agree by the honor code of the College of Arts and Science at New York University and declare
+that all of this is my own work.} \\
+
+\textbf{Before you get started, please read the Submission section thoroughly}.
+
+\section*{Submission}
+Submission is done on Gradescope. \\
+
+\textbf{Written:} When submitting the written parts, make sure to select \textbf{all} the pages that contain part of your answer for that problem, or else you will not get credit.
+You can either directly type your solution between the \texttt{shaded} environments in the released \texttt{.tex} file,
+or write your solution using pen or stylus. 
+A \texttt{.pdf} file must be submitted.
+
+\textbf{Programming:} Questions marked with ``coding'' next to the assigned to the points require a coding part in \texttt{submission.py}.
+Submit \texttt{submission.py} and we will run an autograder on Gradescope. You can use functions in \texttt{util.py}. However, please do not import additional libraries (e.g. \texttt{numpy}, \texttt{sklearn}) that aren't mentioned in the assignment, otherwise the grader may crash and no credit will be given.
+You can run \texttt{test.py} to test your code but you don't need to submit it.
+
+
+\section*{Problem 1: N-gram Language Models}
+In this problem, we will derive the MLE solution of n-gram language models. 
+Recall that in n-gram language models, we assume that a token only depends on $n-1$ previous tokens, namely:
+$$
+p(x_{1:m}) = \prod_{i=1}^m p(x_i\mid x_{i-n+1:i-1}) \;,
+$$
+where $x_i\in\mathcal{V}$
+and $x_{1:i}$ denotes a sequence of $i$ tokens $x_1, x_2, \ldots, x_i$.
+Note that we assume all sequences are prepended with a special start token $\ast$
+and appended with the stop token $\texttt{STOP}$,
+thus $x_i=\ast$ if $i<1$ and $x_m = \texttt{STOP}$.
+We model the conditional distribution $p(x_i\mid x_{i-n+1:i-1})$
+by a categorical distribution with parameters $\alpha$:
+$$
+p(w\mid c) = \alpha[w,c] \quad \text{for } w\in\mathcal{V}, c\in\mathcal{V}^{n-1} 
+\;.
+$$
+Let $D=\{x^{i}_{1:m_i}\}_{i=1}^N$ be our training set of $N$ sequences, each of length $m_i$.
+
+\begin{enumerate}
+    \item {[2 points]} 
+        Write down the MLE objective for the n-gram model defined above. 
+        Note that we need to add the constraint that the conditional probabilities sum to one given each context.
+    \newpage
+    
+    \item {[2 points]} Recall that the method of Lagrange multipliers allows us to solve an optimization problem with equality constraints by forming a Lagrangian function, which can be optimized without explicitly parameterizing in terms of the constraints.
+
+    Given an optimization problem to maximize $f(x)$ subject to the constraint $g(x) = 0$, we can express it in the form of the Langrangian, which can be written as $f(x) - \lambda g(x)$.
+    
+    Write down the Langrangian $\mathcal{L}(\alpha, \lambda)$ for the MLE objective using the method of Lagrange multipliers.
+    \newpage
+    
+\item {[4 points]} Find the solution for $\alpha$. Define $\text{count}(\cdot)$ to be a function which maps a sequence to its frequency in $D$.
+    You can assume $\text{count}(c) > 0$ for $c\in\mathcal{V}^{n-1}$.
+    \hint{The solution for $\alpha$ should be a function of $w$ and $c$. You can start by setting the partial derivative of $\mathcal{L}$ w.r.t. $\alpha[w,c]$; and w.r.t. $\lambda_c$ to 0 and combining the two equations.}
+
+
+\end{enumerate}
+
+\newpage
+\section*{Problem 2: Noise Contrastive Estimation}
+In this problem, we will explore efficient training of neural language models using noise-contrastive estimation.
+Recall that in neural language modeling, the conditional probability $p(w\mid c)$
+is modeled by
+\begin{align}
+p_\theta(w\mid c) = \frac{\exp(f_\theta(w, c))}{\sum_{w'\in\mathcal{V}}\exp(f_\theta(w', c))} \;,
+    \label{eqn:softmax}
+\end{align}
+where $w\in\mathcal{V}$ is a token in the vocabulary,
+$c\in\mathcal{C}$ is some context,
+and $f_\theta\colon \mathcal{V} \times \mathcal{C} \rightarrow \mathbb{R}$
+is a scoring function indicating how compatible $w$ and $c$ are,
+e.g. a recurrent neural network.
+\begin{enumerate}
+    \item {[2 points]} 
+        As usual, we use MLE to learn the parameters $\theta\in\mathbb{R}^d$.
+        Show that the gradient of the log likelihood for a single observation $\ell(\theta,w)$ is
+        $$
+        \nabla_\theta f_\theta(w, c)
+        - \mathbb{E}_{w\sim p_\theta} [\nabla_\theta f_\theta(w, c)]
+        \;.
+        $$
+    \newpage
+    \item {[2 points]}
+    Note that computing the gradient can be expensive due to summing over the vocabulary when computing the expectation term,
+    which arises from the normalizer (or the partition function) in (\ref{eqn:softmax}).
+    One idea is to treat the normalizer as another parameter to estimate, i.e.
+        $$
+        p_\theta(w\mid c) = \frac{\exp(f_\theta(w, c))}
+        {\exp(z_c)} \;,
+        \label{eqn:normalizer}
+        $$
+        where $z_c\in\mathbb{R}$ for each context $c$.
+        Explain why the MLE solution for $z_c$ doesn't exist. 
+
+
+    \newpage
+    \item {[3 points]}
+    The key idea in noise contrastive estimation is to reduce the density estimation problem to a binary classification problem, i.e.
+        deciding whether a word comes from the ``true'' distribution $p(w\mid c)$ or a ``noise'' distribution $p_n(w)$.
+        Note that the noise distribution is context-independent.
+        (This should remind you of negative sampling in HW1.)
+        Now consider a new data-generating process:
+        Given context $c$, with probability $\frac{1}{k+1}$ we sample a word from $p(w\mid c)$;
+        with probability $\frac{k}{k+1}$ we sample a word from $p_n(w)$ ($k\in \mathbb{N}$).
+        In other words, for each ``true'' sample, we generate $k$ ``fake'' samples.
+        Let $Y$ be a binary random variable indicating whether $w$ is a true sample or a fake sample.
+        Show that 
+        $$
+        p(Y=1\mid w, c) = \frac{p(w\mid c)}{p(w\mid c) + kp_n(w)} \;.
+        $$
+        \hint{Use Bayes' rule.}
+
+    \newpage
+    \item{[4 points]} \textbf{[Optional]}
+        We have reduced the problem of estimating $p(w\mid c)$ to predicting whether a sample $(w, c)$ is true or fake.
+        To learn a classifier, let's parametrize $p(Y=1\mid w, c)$.
+        Note that $p_n$ is known since it's chosen by us, so we just need to parametrize $p(w\mid c)$.
+        Recall that we do not want to compute the normalizer, so (\ref{eqn:softmax}) is not an option.
+        Instead, let's model the normalizer as another parameter. 
+        We can either explicitly model it as in (\ref{eqn:normalizer}),
+        or directly learn a self-normalizing function (i.e. $z_c=0$):
+        $$
+        \tilde{p}_\theta(w\mid c) = \exp (g_\theta(w, c)) \;.
+        $$
+        Here we will proceed with the latter.\footnote{Empirically, it has been observed that setting $z_c$ to be a constant works just fine when $g_\theta$ is a neural network.}
+        
+        For each word, we sample $k$ fake words $w^n$ from $p_n(w)$.
+        Thus the log likelihood for a word and its noise samples is 
+        $$
+        \ell_{\text{NCE}}(\theta, w, k) =
+            \log p_\theta(Y=1\mid w, c) + k\mathbb{E}_{w'\sim p_n} \log p_\theta(Y=0\mid w', c)
+    \;.
+        $$
+        In practice, expectation over $p_n$ is approxmiated by $k$ Monte Carlo samples.
+
+        Next, let's analyze how this objective connects to the MLE objective.
+        Let $p_D(w\mid c)$ be the true distribution of words
+        and consider the expected log likelihood.
+        Let $\theta^*$ be the solution of
+        $$
+        \max_{\theta\in \mathbb{R}^d} 
+\mathbb{E}_{w\sim p_D} \left [\ell_{\text{MLE}}(\theta, w)
+        \right ]
+        $$
+        and $\theta^*_n$ be the solution of
+        $$
+        \max_{\theta\in \mathbb{R}^d} 
+\mathbb{E}_{w\sim p_D} \left [ \ell_{\text{NCE}}(\theta, w,k)
+        \right ]
+        \;.
+        $$
+        Assuming $f_\theta$ and $g_\theta$ have the same parametrization,
+        show that when $k\rightarrow\infty$,
+        $\theta^*$ and $\theta^*_n$ satisfy the same first order condition, i.e.
+        $$
+        \mathbb{E}_{w\sim p_D}\left[ \nabla_{\theta} f_{\theta}(w, c)|_{\theta=\theta^*} \right ]
+        = \mathbb{E}_{w\sim p_{\theta^*}} \left[ \nabla_{\theta} f_{\theta}(w, c) |_{\theta=\theta^*}\right ]
+        \;,
+        $$
+        $$
+        \mathbb{E}_{w\sim p_D}\left[ \nabla_{\theta} g_{\theta}(w, c)|_{\theta=\theta_n^*} \right ]
+        = \mathbb{E}_{w\sim \tilde{p}_{\theta_n^*}} \left[ \nabla_{\theta} g_{\theta}(w, c) |_{\theta=\theta_n^*}\right ]
+        \;.
+        $$
+
+
+    \newpage
+    \section*{Problem 3: Conditional Random Fields}
+    In this problem, you will implement inference algorithms for the CRF model and compare different sequence prediction models on synthetic data. 
+    You may want to go over the \texttt{mxnet\_tutorial.ipynb} first before you start.
+
+    \textbf{Environment setup}: Follow instructions in \texttt{README.md} to set up the environment for running the code.
+    \begin{enumerate}
+        \item {[2 points]} To get started, take a look at the function \texttt{generate\_dataset\_identity} in \texttt{util.py}  
+            and the class \texttt{UnigramModel} in \texttt{model.py}.
+            Given $x=(x_1, \ldots x_n)$ where $x_i\in\mathcal{V}$,
+            the model makes an independent prediction at each step using only input at that step, i.e. $p(y_i\mid x_i)$.
+            Run \texttt{python test.py unigram} to train a \texttt{UnigramModel}.
+            It outputs the average hamming loss in the end.
+            Let $y=(y_1, \ldots, y_n)$ be the gold labels and 
+            $\hat{y} = (\hat{y}_1, \ldots, \hat{y}_n)$ be the predicted labels,
+            take a look at \texttt{hamming\_loss} in \texttt{submission.py}
+            and write down the loss function.
+
+
+            \newpage
+        \item {[2 points]} Take a look at the \texttt{RNNModel} in \texttt{model.py}.
+            It uses a bi-directional LSTM to encode $x$ and
+            makes independent predictions for each $y_i$.
+            This time let's use the dataset generated by \texttt{generate\_dataset\_rnn}.
+            Compare the result by running
+            \texttt{python test.py unigram --data rnn}
+            and 
+            \texttt{python test.py rnn --data rnn}.
+            Which model has a lower error rate? Explain your findings.
+
+            \newpage
+        \item {[4 points, coding]} Next, we are going to add a CRF layer on top of the RNN model (see \texttt{CRFRNNModel} in \texttt{model.py}).
+            Here we use the autograd function in MXNet to compute gradient for us,
+            so we only need to implement the forward pass (the counterpart of the forward algorithm).
+            Take a look at \texttt{crf\_loss}.
+            The main challenge here is to compute the normalizer which sums over all possible sequences:
+            \begin{align*}
+                \text{normalizer} &= \sum_{y\in\mathcal{Y}^n} \exp\left [ s(y)  \right ]\\
+            &= \sum_{y\in\mathcal{Y}^n} \exp\left [ \sum_{i=1}^n u(y_i) + \sum_{i=2}^n b(y_i, y_{i-1})  \right ]
+            \end{align*}
+            where $u$ and $b$ are scores from the \texttt{CRFRNNModel}.
+            Note that here we assume $y_1=*$ (the start symbol).
+            Implement \texttt{compute\_normalizer} using the \texttt{logsumexp} function in \texttt{util.py}. 
+            Your result must match \texttt{bruteforce\_normalizer}.
+            \hint{
+                You can compute all sums using array operations.
+                \texttt{np.expand\_dims} is very helpful here.
+            }
+            \begin{shaded}
+                See \texttt{submission.py}. No written submission.
+            \end{shaded}
+
+        \item {[4 points, coding]} During inference, we will use Viterbi decoding to find
+            $$
+            \arg\max_{y\in\mathcal{Y}^n} s(y)
+            $$
+            where $s(y) =  \sum_{i=1}^n u(y_i) + \sum_{i=2}^n b(y_i, y_{i-1})  $.
+            Implement \texttt{viterbi\_decode}.
+            Your result must match \texttt{bruteforce\_decode}.
+            \hint{
+                You can compute all sums using array operations.
+                \texttt{np.expand\_dims} is very helpful here.
+            }
+            \begin{shaded}
+                See \texttt{submission.py}. No written submission.
+            \end{shaded}
+
+            \newpage
+        \item {[3 points]} We are ready to test the CRFRNN model now.
+            Use the HMM data (take a look at \texttt{generate\_dataset\_hmm} in \text{util.py}) and compare it with the RNN model by running
+            \texttt{python test.py rnn --data hmm} and 
+            \texttt{python test.py crfrnn --data hmm}.
+            Compare the results.
+            \note{
+                This is an open-ended question. 
+                Discuss any findings you have is fine, e.g. runtime, error rate, convergence rate etc.
+            }
+
+    \end{enumerate}
+
+\end{enumerate}
+
+\end{document}
