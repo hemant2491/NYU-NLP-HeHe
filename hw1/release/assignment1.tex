@@ -1,0 +1,280 @@
+\documentclass{article}
+
+%Page format
+\usepackage{pdfpages}
+\usepackage{fancyhdr}
+\usepackage[margin=1in]{geometry}
+
+%Math packages and custom commands
+\usepackage{framed}
+\usepackage{tikz}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{mathtools,amsthm,bbm}
+\usepackage{enumitem,amssymb}
+\newtheoremstyle{case}{}{}{}{}{}{:}{ }{}
+\theoremstyle{case}
+\newtheorem{case}{Case}
+\DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{\text{Var}}
+\DeclareMathOperator{\Cov}{\text{Cov}}
+\newcommand{\bvec}[1]{\mathbf{#1}}
+\renewcommand{\P}{\mathbb{P}}
+\newcommand{\norm}[2][2]{\| #2\|_{#1}}
+\newcommand\eqdef{\stackrel{\rm def}{=}} % Equal by definition
+
+\definecolor{shadecolor}{gray}{0.9}
+
+\theoremstyle{definition}
+\newtheorem*{answer}{Answer}
+\newcommand{\note}[1]{\noindent{[\textbf{NOTE:} #1]}}
+\newcommand{\hint}[1]{\noindent{[\textbf{HINT:} #1]}}
+\newcommand{\recall}[1]{\noindent{[\textbf{RECALL:} #1]}}
+
+\newlist{todolist}{itemize}{2}
+\setlist[todolist]{label=$\square$}
+\usepackage{pifont}
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\done}{\rlap{$\square$}{\raisebox{2pt}{\large\hspace{1pt}\cmark}}%
+\hspace{-2.5pt}}
+\newcommand{\wontfix}{\rlap{$\square$}{\large\hspace{1pt}\xmark}}
+
+
+\title{\textbf{CSCI-GA 2590: Natural Language Processing} \\Representing and Classifying Text}
+\author{Name \\
+NYU ID}
+\date{}
+
+\lhead{NYU ID}
+\chead{Representing and Classifying Text}
+\rhead{\today}
+\lfoot{}
+\cfoot{CSCI-GA 2590: Natural Language Processing --- Fall 2021}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\pagestyle{fancy}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\maketitle
+
+\textbf{Collaborators:} \\
+\textit{By turning in this assignment, I agree by the honor code of the College of Arts and Science at New York University and declare
+that all of this is my own work.} \\
+
+Welcome to your first assignment! The goal of this assignment is to get familiar with basic text classification models through both mathematical analysis and hands-on feature engineering.
+\textbf{Before you get started, please read the Submission section thoroughly}.
+
+\section*{Submission}
+Submission is done on Gradescope. \\
+
+\textbf{Written:} When submitting the written parts, make sure to select \textbf{all} the pages that contain part of your answer for that problem, or else you will not get credit.
+You can either directly type your solution between the \texttt{shaded} environments in the released \texttt{.tex} file,
+or write your solution using pen or stylus. 
+A \texttt{.pdf} file must be submitted.
+
+\textbf{Programming:} Questions marked with ``coding'' next to the assigned to the points require a coding part in \texttt{submission.py}.
+Submit \texttt{submission.py} and we will run an autograder on Gradescope. You can use functions in \texttt{util.py}. However, please do not import additional libraries (e.g. \texttt{numpy}, \texttt{sklearn}) that aren't mentioned in the assignment, otherwise the grader may crash and no credit will be given.
+You can run \texttt{test.py} to test your code but you don't need to submit it.
+
+
+\section*{Problem 1: Naive Bayes classifier}
+In this problem, we will study the \emph{decision boundary} of multinomial Naive Bayes model for binary text classification.
+The decision boundary is often specificed as the level set of a function:
+$\{x\in\mathcal{X} : h(x) = 0\}$,
+where $x$ for which $h(x) > 0$ is in the positive class and
+$x$ for which $h(x) < 0$ is in the negative class.
+
+\begin{enumerate}
+    \item {[2 points]} Give an expression of $h(x)$ for the Naive Bayes model $p_\theta(y\mid x)$, where $\theta$ denotes the parameters of the model.
+
+    \newpage
+\item {[3 points]} Recall that for multinomial Naive Bayes,
+        we have the input $X=(X_1, \ldots, X_n)$ where $n$ is the number of words in an example.
+        In general, $n$ changes with each example but we can ignore that for now.
+        We assume that $X_i\mid Y=y \sim \text{Categorical}(\theta_{w_1,y}, \ldots \theta_{w_m,y})$ where $Y\in \{0, 1\}$, $w_i\in\mathcal{V}$, and $m=|\mathcal{V}|$ is the vocabulary size.
+        Further, $Y\sim\text{Bernoulli}(\theta_1)$.
+        Show that the multinomial Naive Bayes model has a linear decision boundary,
+        i.e. show that $h(x)$ can be written in the form $w\cdot x + b=0$.
+        \recall{
+            The categorical distribution is a multinomial distribution with one trial.
+            Its PMF is
+            $$
+            p(x_1,\ldots, x_m) = \prod_{i=1}^m\theta_{i}^{x_i} \;,
+            $$
+            where $x_i = \mathbbm{1}[x=i]$, $\sum_{i=1}^m x_i = 1$,
+            and $\sum_{i=1}^m \theta_i = 1$.
+        }
+    
+    \newpage
+\item {[2 points]} In the above model, $X_i$ represents a single word, i.e. it's a unigram model.
+    Think of an example in text classification where the Naive Bayes assumption might be violated.
+    How would you allieviate the problem?
+
+\item {[2 points]} Since the decision boundary is linear, the Naive Bayes model works well if the data is linearly separable.
+        Discuss ways to make text data more separable and its influence on model generalization.
+
+\newpage
+\end{enumerate}
+
+\section*{Problem 2: Skip-gram model}
+In this problem, we will gain some insights into the skip-gram model.
+In particular, we will show that it
+encourages the inner product between two word embeddings
+to be equal to their pointwise mutual information (PMI) (up to a constant).
+\\ \\
+Recall that to evaluate the objective function of the skip-gram model
+we need to enumerate over the entire vocabulary $\mathcal{V}$,
+which can be quite expensive in practice.
+Note that the reason we need to enumrate the vocabulary
+is to obtain a probability distribution of neighboring words.
+
+Instead of modeling the distribution of words,
+we can model the distribution of an indicator: whether two words are neighbors.
+Let $Y$ be the indicator random variable.
+We model it by a Bernoulli distribution
+$$
+p_\theta(y=1\mid w, c) = \frac{1}{1 + e^{-u_c\cdot v_w}} \;,
+$$
+where $c \in \mathcal{V}$ is within a window centered at $w\in \mathcal{V}$,
+$u_c, v_w$ represent embeddings of $c$ and $w$,
+and $\theta$ is the model parameter, i.e. word embedding $v$'s and context embedding $u$'s.
+
+What about the negative observations ($y=0$)?
+A naive way is to consider all words that do not occur in the neighborhood of $w$, however, this is as expensive as our original objective.
+One solution is \textbf{negative sampling}, where we only consider a small number of non-neighboring words.
+
+Let $D=\{(w, c)\}$ be the set of all word-neighbor pairs observed in the training set.
+For each pair $(w,c)$, we generate $k$ negative neighbors $c_N$ by sampling from a distribution $p_N(\cdot)$ over the vocabulary.
+
+\begin{enumerate}
+    \item {[3 points]} Let $L$ be the learning objective that maximizes the log-likelihood of $D$
+        and the \emph{expected} log-likelihood of the negative examples.
+        Note that $C_N$ is the random variable in the expectation.
+        % You can use the Bernoulli model $p_\theta(y\mid w, c)$ (without expanding it further) in the final expression.
+        Show that 
+        \begin{align}
+            L &= \max_\theta
+        \sum_{(w,c)\in D} \log \frac{1}{1 + e^{-u_c\cdot v_w}} +
+        k\sum_{(w,\cdot)\in{D}}\sum_{c_N\in\mathcal{V}} p_N(c_N) \log \frac{1}{1 + e^{u_{c_N}\cdot v_w}}
+        \end{align}
+
+    \newpage
+\item {[2 points]} Let 
+        $$
+        \sigma(\alpha) = \frac{1}{1+e^{-\alpha}} \;.
+        $$
+        Show that
+        $$
+        \frac{d}{d\alpha}\log\sigma(\alpha) = \frac{1}{1+e^\alpha} \;.
+        $$
+    
+    \newpage
+\item {[3 points]} Let's consider one pair $(w=b,c=a)$.
+        Let $\alpha = u_a\cdot v_b$.  
+        Show that the optimal solution of $\alpha$ is
+        $$
+        \alpha^\ast = \log \frac{A}{B} \;,
+        $$
+        where
+        \begin{align} 
+            A &= \sum_{(w,c)\in D}\mathbbm{1}[w=b,c=a] \\
+            B &= k\sum_{(b,\cdot)\in D}p_N(a) \;.
+        \end{align} 
+        \hint{
+            Let $\ell(\theta)$ be the objective.
+            Solve for $\alpha$ in $\frac{\partial \ell}{\partial \alpha}=0$, carefully considering what the partial derivative of objective w.r.t. $\alpha$ will be.
+            You can use results from previous questions.
+        }
+    
+    \newpage
+\item {[2 points]} Suppose the distribution of negative words $p_N(w)$ for $w\in\mathcal{V}$ is a categorical distribution given by
+        $$
+        p_N(w) = \frac{\text{count}(w, \cdot, D)}{|D|} \;,
+        $$
+        where $\text{count}(w, \cdot, D)  = \sum_{c\in\mathcal{V}} \text{count}(w, c, D)$.
+        Note that $p_N(w)$ is simply the fraction of unigram $w$ in $D$. 
+        Show that
+        $$
+        \alpha^\ast = \text{PMI}(b,a) - \log k  \;,
+        $$
+        where the PMI score of word co-occurence in $D$ is defined as
+        $$
+        \text{PMI}(b,a) \eqdef \log
+        \frac{\text{count}(b,a,D)|D|}
+        {\text{count}(b,\cdot, D) \text{count}(a,\cdot, D)}
+        \;.
+        $$
+        \hint{Think about how to express $A$ and $B$ using $\text{count}$.}
+
+    \newpage
+\item {[2 points]} Let's denote the unigram model defined above by $p_{\text{unigram}}(w)$.
+        In practice, we often prefer to use $p_N(w) \propto p_{\text{unigram}}^\beta(w)$
+        where $\beta\in [0, +\infty]$.
+        Describe the desired range of $\beta$ and explain why. 
+
+\end{enumerate}
+
+\newpage
+\section*{Problem 3: Natural language inference}
+In this problem, you will build a logistic regression model for textual entailment.
+Given a \textit{premise} sentence,
+and a \textit{hypothesis} sentence,
+we would like to predict whether the hypothesis is \textit{entailed} by the premise,
+i.e. if the premise is true, then the hypothesis must be true.
+
+Example:
+\begin{center}
+    \begin{tabular}{lll}
+        label & premise & hypothesis \\
+        \hline
+        entailment & The kids are playing in the park & The kids are playing \\
+        non-entailment &The kids are playing in the park & The kids are happy 
+    \end{tabular}
+\end{center}
+
+\begin{enumerate}
+    \item {[1 point]} Given a dataset $D=\{(x^{(i)}, y^{(i)})\}_{i=1}^n$ where $y\in\{0,1\}$, let $\phi$ be the feature extractor and $w$ be the weight vector. Write the maximum log-likelihood objective as a \textit{minimization} problem.
+        \hint{Start with $\min_w - \sum_{i=1}^n \log p(y^{(i)}\mid x^{(i)}; w)$}
+
+    \newpage
+    \item {[3 point, coding]} We first need to decide the features to represent $x$.
+        Implement \texttt{extract\_unigram\_features} which returns a BoW feature vector for the premise and the hypothesis.
+
+    \newpage
+    \item {[2 point]} Let $\ell(w)$ be the objective you obtained above.
+    Compute the gradient of $\ell_i(w)$ given a single example $(x^{(i)}, y^{(i)})$.
+        Note that $\ell(w) = \sum_{i=1}^n \ell_i(w)$.
+        You can use $f_w(x) = \frac{1}{1 + e^{-w\cdot\phi(x)}}$
+        to simplify the expression.
+
+    \newpage
+    \item {[5 points, coding]} Use the gradient you derived above to implement \texttt{learn\_predictor}.
+        You must obtain an error rate less than 0.3 on the training set and less than 0.4 on the test set to get full credit \emph{using the unigram feature extractor}.
+
+    \newpage
+    \item {[3 points]} Discuss what are the potential problems with the unigram feature extractor
+        and describe your design of a better feature extractor. 
+
+    \newpage
+    \item {[3 points, coding]}
+        Implement your feature extractor in \texttt{extract\_custom\_features}.
+        You must get a lower error rate on the dev set than what you got using the unigram feature extractor to get full credits.
+
+    \newpage
+\item {[3 points]} When you run the tests in \texttt{test.py}, it will output a file \texttt{error\_analysis.txt}. (You may want to take a look at the \texttt{error\_analysis} function in \texttt{util.py}).
+    Select five examples misclassified by the classifier using custom features.
+        For each example, briefly state your intuition for why the classifier got it wrong, and what information about the example will be needed to get it right.
+
+    \newpage
+\item {[3 points]} Change \texttt{extract\_unigram\_features} such that it only extracts features from the hypothesis.
+    How does it affect the accuracy? Is this what you expected? If yes, explain why. If not, give some hypothesis for why this is happening.
+    Don't forget to change the function back before your submit. You do not need to submit your code for this part.
+
+\end{enumerate}
+
+\end{document}
