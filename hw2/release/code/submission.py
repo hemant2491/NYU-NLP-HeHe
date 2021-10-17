@@ -72,7 +72,42 @@ def viterbi_decode(scores):
     """
     unigram_scores, bigram_scores = scores
     # BEGIN_YOUR_CODE
-    raise Exception
+
+    batch_size, seq_len, num_labels = unigram_scores.shape
+
+    # sum = [[[0 for x in range(num_labels)] for y in range(seq_len)] for z in range(batch_size)]
+    pi = np.zeros((batch_size, seq_len, num_labels)) #[[[0 for x in range(num_labels)] for y in range(seq_len)] for z in range(batch_size)]
+    max_index = np.zeros((batch_size, seq_len))
+
+    custom_viterbi_scores = np.zeros((batch_size))
+
+    for batch in range(batch_size):
+
+        for tag in range(num_labels):
+            pi[batch][0][tag] = unigram_scores[batch][0][tag]
+        
+        max_index[batch][0] = onp.argmax(unigram_scores[batch][0][:])
+
+        for seq in range(1, seq_len):
+
+            for tag in range(num_labels):
+                # compute pi
+                sum = unigram_scores[batch][seq][tag] + bigram_scores[batch][seq][tag][:] + pi[batch][seq-1][:]
+                # pi = onp.argmax(sum)
+                pi[batch][seq][tag] = sum[onp.argmax(sum)]
+
+            max_index[batch][seq] = np.argmax(pi[batch][seq][:])
+        # pi_sum = 0
+
+        # for tag in range(num_labels):
+        #     pi_sum += pi[batch][seq_len-1][tag]
+        
+        custom_viterbi_scores[batch] = pi[batch][seq][max_index[batch][seq]]
+
+    # print("Viterbi Output: ")
+    # print(custom_viterbi_scores)
+    return custom_viterbi_scores,max_index
+    # raise Exception
     # END_YOUR_CODE
 
 def bruteforce_normalizer(unigram_scores, bigram_scores):
@@ -101,7 +136,45 @@ def compute_normalizer(unigram_scores, bigram_scores):
         normalizer : (batch_size,)
     """
     # BEGIN_YOUR_CODE
-    raise Exception
+
+    # print("Normaliser Input: ")
+    # print("unigram_scores")
+    # print(unigram_scores)
+
+    # print("bigram_scores")
+    # print(bigram_scores)
+
+    batch_size, seq_len, num_labels = unigram_scores.shape
+
+    # sum = [[[0 for x in range(num_labels)] for y in range(seq_len)] for z in range(batch_size)]
+    pi = np.zeros((batch_size, seq_len, num_labels)) #[[[0 for x in range(num_labels)] for y in range(seq_len)] for z in range(batch_size)]
+
+    custom_mormalized_scores = np.zeros((batch_size))
+
+    for batch in range(batch_size):
+
+        for tag in range(num_labels):
+            pi[batch][0][tag] = unigram_scores[batch][0][tag]
+
+        for seq in range(1, seq_len):
+
+            for tag in range(num_labels):
+                # compute pi
+                sum = unigram_scores[batch][seq][tag] + bigram_scores[batch][seq][tag][:] + pi[batch][seq-1][:]
+                pi[batch][seq][tag] = logsumexp(sum)
+
+        # pi_sum = 0
+
+        # for tag in range(num_labels):
+        #     pi_sum += pi[batch][seq_len-1][tag]
+        
+        custom_mormalized_scores[batch] = logsumexp(pi[batch][seq][:])
+
+    # print("Normalizer Output: ")
+    # print(custom_mormalized_scores)
+    return custom_mormalized_scores
+
+    # raise Exception
     # END_YOUR_CODE
 
 def crf_loss(scores, y):
