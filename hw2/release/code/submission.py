@@ -38,9 +38,9 @@ def score_sequence(seqs, unigram_scores, bigram_scores):
         scores : (batch_size,)
     """
     batch_size, seq_len = seqs.shape
-    prev_scores = unigram_scores[:, 0, seqs[:, 0]]
+    prev_scores = unigram_scores[np.arange(batch_size), 0, seqs[:, 0]]
     for i in range(1, seqs.shape[1]):
-        prev_scores = prev_scores + unigram_scores[:, i, seqs[:, i]] + bigram_scores[:, i, seqs[:, i], seqs[:, i - 1]]
+        prev_scores = prev_scores + unigram_scores[np.arange(batch_size), i, seqs[:, i]] + bigram_scores[np.arange(batch_size), i, seqs[:, i], seqs[:, i - 1]]
     return prev_scores
 
 def bruteforce_decode(unigram_scores, bigram_scores):
